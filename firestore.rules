@@ -1,0 +1,92 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isTontineAdmin(tontineId) {
+      let t = get(/databases/$(database)/documents/ts_tontines/$(tontineId)).data;
+      return isSignedIn() && (t.superAdminId == request.auth.uid || (t.adminIds is list && request.auth.uid in t.adminIds));
+    }
+
+    // A user counts as "self or admin" for a member doc if it's their own doc
+    // or they're an admin of the tontine.
+    function isSelfOrAdmin(tontineId, memberId) {
+      return isSignedIn() && (memberId == request.auth.uid || isTontineAdmin(tontineId));
+    }
+
+    match /ts_users/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.uid == userId;
+    }
+
+    match /ts_app_settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && request.auth.token.email == 'bertolteuzong@gmail.com';
+    }
+
+    match /ts_tontines/{tontineId} {
+      // Read access is needed by everyone to look up invite codes before joining.
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && request.resource.data.superAdminId == request.auth.uid;
+      allow delete: if isTontineAdmin(tontineId);
+
+      // Admins can change anything. A non-admin may only touch the membership
+      // arrays (memberUserIds / adminIds) -- used by joinTontine, leaveTontine,
+      // and becomeAdmin -- and the only uid that may appear/disappear from
+      // either array in that write is the caller's own uid.
+      allow update: if isTontineAdmin(tontineId) ||
+        (isSignedIn() &&
+          request.resource.data.diff(resource.data).affectedKeys()
+            .hasOnly(['memberUserIds', 'adminIds']) &&
+          request.resource.data.memberUserIds.toSet()
+            .difference(resource.data.memberUserIds.toSet())
+            .union(resource.data.memberUserIds.toSet()
+              .difference(request.resource.data.memberUserIds.toSet()))
+            .union(request.resource.data.adminIds.toSet()
+              .difference(resource.data.adminIds.toSet()))
+            .union(resource.data.adminIds.toSet()
+              .difference(request.resource.data.adminIds.toSet()))
+            .hasOnly([request.auth.uid]));
+
+      match /members/{memberId} {
+        allow read: if isSignedIn();
+        allow create, update: if isSelfOrAdmin(tontineId, memberId);
+        allow delete: if isSelfOrAdmin(tontineId, memberId);
+      }
+
+      match /chat/{messageId} {
+        allow read: if isSignedIn();
+        allow create: if isSignedIn() &&
+          (request.resource.data.authorId == request.auth.uid ||
+           request.resource.data.authorId == 'system');
+        allow update, delete: if isSignedIn() &&
+          (resource.data.authorId == request.auth.uid || isTontineAdmin(tontineId));
+      }
+
+      match /history/{historyId} {
+        allow read: if isSignedIn();
+        allow write: if isTontineAdmin(tontineId);
+      }
+
+      match /polls/{pollId} {
+        allow read: if isSignedIn();
+        allow create: if isTontineAdmin(tontineId);
+        // A member may update a poll only to register a vote: question and
+        // creator must stay identical; admins can update/delete freely.
+        allow update: if isTontineAdmin(tontineId) ||
+          (isSignedIn() &&
+            request.resource.data.question == resource.data.question &&
+            request.resource.data.createdBy == resource.data.createdBy);
+        allow delete: if isTontineAdmin(tontineId);
+      }
+
+      match /aid/{aidId} {
+        allow read: if isSignedIn();
+        allow write: if isTontineAdmin(tontineId);
+      }
+    }
+  }
+}
