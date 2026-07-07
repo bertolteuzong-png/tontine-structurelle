@@ -31,9 +31,9 @@ const ALL_TABS = [
 
 function SideNav({ active, setActive }) {
   const { activeTontine, isAdmin } = useTontine();
-  const { C, lang } = useTheme();
+  const { C, theme, lang } = useTheme();
   const { user } = useAuth();
-  const color = activeTontine?.color || '#E63946';
+  const color = theme.primary;
   const isDev = user?.email === DEV_EMAIL;
 
   const tabs = ALL_TABS.filter(tab => {
@@ -78,7 +78,7 @@ function SideNav({ active, setActive }) {
 function NoTontineScreen() {
   const { C, t } = useTheme();
   const { createTontine, joinTontine } = useTontine();
-  const { userProfile } = useAuth();
+  const { userProfile, logout } = useAuth();
   const [name, setName] = useState('');
   const [color, setColor] = useState('#E63946');
   const [code, setCode] = useState('');
@@ -98,8 +98,18 @@ function NoTontineScreen() {
     <div style={{
       minHeight: '100vh', background: C.bg,
       display: 'flex', flexDirection: 'column', alignItems: 'center',
-      justifyContent: 'center', padding: 24,
+      justifyContent: 'center', padding: 24, position: 'relative',
     }}>
+      {/* Back to login button - was completely missing, leaving users stuck here */}
+      <button onClick={logout} style={{
+        position: 'absolute', top: 20, left: 20,
+        display: 'flex', alignItems: 'center', gap: 6,
+        padding: '8px 14px', borderRadius: 20, border: `2px solid ${C.border}`,
+        background: C.card, color: C.text, fontWeight: 700, fontSize: 12, cursor: 'pointer',
+      }}>
+        ← Retour à la connexion
+      </button>
+
       <div style={{ fontSize: 64, marginBottom: 16 }}>🇨🇲</div>
       <h2 style={{ color: C.text, fontWeight: 900, margin: '0 0 6px', textAlign: 'center' }}>
         Tontine Structurelle
@@ -249,15 +259,19 @@ function RulesGate({ children }) {
 }
 
 function MainApp() {
-  const { user, loading: authLoading } = useAuth();
-  const { tontines, activeTontineId, activeTontine, loading: tontineLoading } = useTontine();
-  const { C, lang, t } = useTheme();
+  const { user, loading: authLoading, updateUserProfile, userProfile } = useAuth();
+  const { tontines, activeTontineId, activeTontine, setActiveTontineId, loading: tontineLoading } = useTontine();
+  const { C, theme, lang, t } = useTheme();
   const [tab, setTab] = useState('home');
 
   useEffect(() => {
     if (user) {
       requestNotificationPermission().then(token => {
-        if (token) console.log('FCM Token ready');
+        // Only write when it actually changed, to avoid a pointless Firestore
+        // write on every mount (the token is usually stable across sessions).
+        if (token && token !== userProfile?.fcmToken) {
+          updateUserProfile({ fcmToken: token });
+        }
       });
       const unsub = onForegroundMessage((payload) => {
         console.log('Notification reçue:', payload);
@@ -307,17 +321,20 @@ function MainApp() {
         background: C.bg, fontFamily: "'Segoe UI',system-ui,sans-serif",
         display: 'flex', flexDirection: 'column', transition: 'background 0.3s',
       }}>
-        {/* Header */}
+        {/* Header — this is the app's real "chrome": it reflects the chosen
+            THEME (previously it silently used the active tontine's color
+            instead, which is why switching themes barely looked different
+            -- the most visible surface in the whole UI never changed). */}
         <div style={{
-          background: `linear-gradient(135deg,${activeTontine?.color || '#E63946'},${activeTontine?.color || '#E63946'}cc)`,
+          background: theme.gradient,
           padding: '42px 13px 9px',
-          boxShadow: `0 4px 20px ${activeTontine?.color || '#E63946'}44`,
+          boxShadow: `0 4px 20px ${theme.primary}44`,
           position: 'sticky', top: 0, zIndex: 100,
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
             <div>
-              <h2 style={{ color: '#fff', margin: 0, fontSize: 15, fontWeight: 900 }}>
-                🇨🇲 Tontine Structurelle
+              <h2 style={{ color: '#fff', margin: 0, fontSize: 15, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span>{theme.icon}</span> Tontine Structurelle
               </h2>
               <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, fontSize: 11 }}>
                 {activeTontine?.name}
@@ -336,15 +353,17 @@ function MainApp() {
             </div>
           </div>
 
-          {/* Tontine switcher */}
+          {/* Tontine switcher -- keeps each tontine's own color here
+              specifically, so multiple tontines stay visually distinguishable
+              from one another regardless of the chosen app theme. */}
           <div style={{ display: 'flex', gap: 7, overflowX: 'auto', scrollbarWidth: 'none' }}>
             {tontines.map(tt => (
-              <button key={tt.id} onClick={() => { /* switch via settings */ }} style={{
+              <button key={tt.id} onClick={() => setActiveTontineId(tt.id)} style={{
                 display: 'flex', alignItems: 'center', gap: 5, padding: '5px 11px',
                 borderRadius: 20, border: 'none', cursor: 'pointer', whiteSpace: 'nowrap',
                 fontWeight: 700, fontSize: 11,
                 background: tt.id === activeTontineId ? 'rgba(255,255,255,0.92)' : 'rgba(255,255,255,0.22)',
-                color: tt.id === activeTontineId ? activeTontine?.color : '#fff',
+                color: tt.id === activeTontineId ? tt.color : '#fff',
               }}>
                 <div style={{ width: 6, height: 6, borderRadius: '50%', background: tt.id === activeTontineId ? tt.color : 'rgba(255,255,255,0.7)' }} />
                 {tt.name}

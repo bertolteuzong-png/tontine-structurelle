@@ -3,6 +3,7 @@ import { createContext, useContext, useState, useEffect } from 'react';
 const THEMES = {
   cameroun: {
     id: 'cameroun',
+    icon: '🇨🇲',
     name: '🇨🇲 Cameroun',
     primary: '#E63946',
     secondary: '#FF9F1C',
@@ -19,6 +20,7 @@ const THEMES = {
   },
   ocean: {
     id: 'ocean',
+    icon: '🌊',
     name: '🌊 Ocean',
     primary: '#0077B6',
     secondary: '#00B4D8',
@@ -35,6 +37,7 @@ const THEMES = {
   },
   midnight: {
     id: 'midnight',
+    icon: '🌙',
     name: '🌙 Midnight',
     primary: '#7C3AED',
     secondary: '#F59E0B',
@@ -51,6 +54,7 @@ const THEMES = {
   },
   nature: {
     id: 'nature',
+    icon: '🌿',
     name: '🌿 Nature',
     primary: '#2D6A4F',
     secondary: '#74C69D',
@@ -67,6 +71,7 @@ const THEMES = {
   },
   sunset: {
     id: 'sunset',
+    icon: '🔥',
     name: '🔥 Sunset',
     primary: '#F97316',
     secondary: '#EC4899',
@@ -83,6 +88,7 @@ const THEMES = {
   },
   royal: {
     id: 'royal',
+    icon: '💎',
     name: '💎 Royal',
     primary: '#1E3A8A',
     secondary: '#D97706',
@@ -99,6 +105,7 @@ const THEMES = {
   },
   grape: {
     id: 'grape',
+    icon: '🍇',
     name: '🍇 Grape',
     primary: '#7E22CE',
     secondary: '#A78BFA',
@@ -115,6 +122,7 @@ const THEMES = {
   },
   carbon: {
     id: 'carbon',
+    icon: '⚫',
     name: '⚫ Carbon',
     primary: '#22C55E',
     secondary: '#4ADE80',

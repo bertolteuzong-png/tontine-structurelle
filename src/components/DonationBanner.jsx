@@ -75,6 +75,7 @@ export default function DonationBanner() {
                   <div>
                     <p style={{ margin: 0, fontSize: 11, color: '#FFD700', fontWeight: 700 }}>MTN Mobile Money</p>
                     <p style={{ margin: 0, fontSize: 15, color: '#fff', fontWeight: 900 }}>{devSettings.mtnNumber}</p>
+                    {devSettings.mtnName && <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>{devSettings.mtnName}</p>}
                   </div>
                 </div>
               ) : (
@@ -86,6 +87,7 @@ export default function DonationBanner() {
                   <div>
                     <p style={{ margin: 0, fontSize: 11, color: '#FF9F1C', fontWeight: 700 }}>Orange Money</p>
                     <p style={{ margin: 0, fontSize: 15, color: '#fff', fontWeight: 900 }}>{devSettings.orangeNumber}</p>
+                    {devSettings.orangeName && <p style={{ margin: 0, fontSize: 12, color: 'rgba(255,255,255,0.7)' }}>{devSettings.orangeName}</p>}
                   </div>
                 </div>
               ) : (

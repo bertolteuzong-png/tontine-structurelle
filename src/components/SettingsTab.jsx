@@ -24,7 +24,7 @@ export default function SettingsTab() {
   const {
     tontines, activeTontineId, setActiveTontineId, activeTontine: tn,
     isAdmin, updateTontine, deleteTontine, leaveTontine,
-    createTontine, joinTontine, becomeAdmin, advanceCycle,
+    createTontine, joinTontine, becomeAdmin, advanceCycle, submitFeedback,
   } = useTontine();
   const { logout } = useAuth();
   const { C, t, lang, setLang } = useTheme();
@@ -45,6 +45,9 @@ export default function SettingsTab() {
   const [newTontineColor, setNewTontineColor] = useState('#E63946');
   const [confirmDeleteTontine, setConfirmDeleteTontine] = useState(false);
   const [confirmAdvanceCycle, setConfirmAdvanceCycle] = useState(false);
+  const [feedbackType, setFeedbackType] = useState('problem');
+  const [feedbackMessage, setFeedbackMessage] = useState('');
+  const [feedbackState, setFeedbackState] = useState('idle');
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -317,15 +320,77 @@ export default function SettingsTab() {
         </Sec>
       )}
 
-      <div style={{ background: C.card, borderRadius: 18, padding: 20, marginBottom: 9, boxShadow: '0 4px 16px rgba(0,0,0,0.07)', textAlign: 'center' }}>
-        <div style={{ fontSize: 32, marginBottom: 8 }}>🇨🇲</div>
-        <p style={{ margin: '0 0 4px', fontWeight: 800, fontSize: 14, color: C.text }}>Tontine Structurelle</p>
-        <p style={{ margin: '0 0 8px', fontSize: 12, color: C.subtext, lineHeight: 1.6 }}>Application pensée et développée pour les Camerounais</p>
-        <div style={{ background: C.primary + '15', borderRadius: 12, padding: '8px 16px', display: 'inline-block' }}>
-          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.primary }}>Développée par Mr BERTOL.T ✨</p>
+      <Sec id="about" icon="ℹ️" title={t.aboutApp} open={open} onToggle={tog} C={C}>
+        <div style={{ textAlign: 'center', marginBottom: 14 }}>
+          <div style={{ fontSize: 40 }}>🇨🇲</div>
         </div>
-        <p style={{ margin: '10px 0 0', fontSize: 11, color: C.subtext }}>Version 1.0.0</p>
-      </div>
+        <p style={{ margin: '0 0 10px', fontSize: 13, color: C.text, lineHeight: 1.7 }}>
+          <strong>Tontine Structurelle</strong> est une application pensée pour moderniser la gestion des tontines camerounaises — sans changer l'esprit de solidarité qui les rend uniques.
+        </p>
+        <p style={{ margin: '0 0 10px', fontSize: 13, color: C.subtext, lineHeight: 1.7 }}>
+          Elle permet de créer et gérer plusieurs tontines, suivre les cotisations et pénalités en temps réel, organiser la rotation des bénéficiaires, communiquer par chat, lancer des sondages, et soutenir les membres en difficulté via l'onglet Aide — le tout accessible à tous les membres, où qu'ils soient.
+        </p>
+        <p style={{ margin: 0, fontSize: 13, color: C.subtext, lineHeight: 1.7 }}>
+          Chaque administrateur garde le contrôle total de sa tontine, tandis que les membres suivent tout en toute transparence.
+        </p>
+        <div style={{ background: C.primary + '15', borderRadius: 12, padding: '10px 14px', marginTop: 14, textAlign: 'center' }}>
+          <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.primary }}>Développée par Mr BERTOL.T ✨</p>
+          <p style={{ margin: '4px 0 0', fontSize: 11, color: C.subtext }}>Version 1.0.0</p>
+        </div>
+      </Sec>
+
+      <Sec id="share" icon="📤" title="Partager l'application" open={open} onToggle={tog} C={C}>
+        <p style={{ fontSize: 12, color: C.subtext, margin: '0 0 12px', lineHeight: 1.6 }}>
+          Faites découvrir Tontine Structurelle à votre entourage.
+        </p>
+        <Pill text="📤 Partager" color={C.primary} onClick={async () => {
+          const shareData = {
+            title: 'Tontine Structurelle',
+            text: 'Découvre Tontine Structurelle, l\'application pour gérer tes tontines facilement !',
+            url: window.location.origin,
+          };
+          if (navigator.share) {
+            try { await navigator.share(shareData); } catch { /* user cancelled, ignore */ }
+          } else {
+            await navigator.clipboard.writeText(shareData.url);
+            showSuccess('Lien copié ! Vous pouvez le coller où vous voulez.');
+          }
+        }} />
+      </Sec>
+
+      <Sec id="feedback" icon="💬" title="Aide & Suggestions" open={open} onToggle={tog} C={C}>
+        <p style={{ fontSize: 12, color: C.subtext, margin: '0 0 12px', lineHeight: 1.6 }}>
+          Un problème avec l'application ? Une idée pour l'améliorer ? Écrivez-nous, votre message nous parvient directement.
+        </p>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 10 }}>
+          {[['problem', '⚠️ Signaler un problème'], ['suggestion', '💡 Suggestion']].map(([v, l]) => (
+            <button key={v} onClick={() => setFeedbackType(v)} style={{
+              flex: 1, padding: '9px 6px', borderRadius: 12, cursor: 'pointer', fontSize: 12, fontWeight: 700,
+              border: `2px solid ${feedbackType === v ? C.primary : C.border}`,
+              background: feedbackType === v ? C.primary + '15' : C.card,
+              color: feedbackType === v ? C.primary : C.subtext,
+            }}>{l}</button>
+          ))}
+        </div>
+        <textarea
+          value={feedbackMessage}
+          onChange={e => setFeedbackMessage(e.target.value)}
+          placeholder={feedbackType === 'problem' ? 'Décrivez ce qui ne fonctionne pas...' : 'Décrivez votre idée...'}
+          style={{ width: '100%', minHeight: 90, padding: 11, borderRadius: 10, border: `2px solid ${C.border}`, fontSize: 13, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontFamily: 'inherit', marginBottom: 10, background: C.inputBg, color: C.text }}
+        />
+        <Pill text={feedbackState === 'sending' ? 'Envoi...' : 'Envoyer'} color={C.primary} disabled={feedbackState === 'sending'} onClick={async () => {
+          if (!feedbackMessage.trim()) return showError('Écrivez un message avant d\'envoyer.');
+          setFeedbackState('sending');
+          const result = await submitFeedback(feedbackType, feedbackMessage);
+          if (result.success) {
+            showSuccess('Message envoyé, merci !');
+            setFeedbackMessage('');
+          } else {
+            showError('Échec de l\'envoi, réessayez.');
+          }
+          setFeedbackState('idle');
+        }} />
+      </Sec>
 
       <button onClick={logout} style={{ width: '100%', padding: 13, borderRadius: 14, border: 'none', background: 'linear-gradient(135deg,#E63946,#c0392b)', color: '#fff', fontWeight: 800, fontSize: 14, cursor: 'pointer', marginTop: 6, boxShadow: '0 6px 20px rgba(230,57,70,0.35)' }}>
         {t.logout}

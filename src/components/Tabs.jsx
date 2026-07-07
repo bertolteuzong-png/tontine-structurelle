@@ -287,7 +287,7 @@ export function ParticipationTab() {
 
 // ─── CHAT ─────────────────────────────────────────────────────────────────────
 export function ChatTab() {
-  const { chat, isAdmin, activeTontine: tn, sendMessage, pinMessage } = useTontine();
+  const { chat, isAdmin, activeTontine: tn, sendMessage, pinMessage, deleteMessage } = useTontine();
   const { user } = useAuth();
   const { C, t } = useTheme();
   const [text, setText] = useState('');
@@ -297,6 +297,7 @@ export function ChatTab() {
   const [uploading, setUploading] = useState(false);
   const [zoomedImage, setZoomedImage] = useState(null);
   const [replyTo, setReplyTo] = useState(null);
+  const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const endRef = useRef();
   const fileRef = useRef();
   const timerRef = useRef();
@@ -434,11 +435,20 @@ export function ChatTab() {
                     </div>
                   )}
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, justifyContent: isOwn ? 'flex-end' : 'flex-start' }}>
-                  <p style={{ margin: 0, fontSize: 9, color: C.subtext }}>{msg.time}</p>
-                  <button onClick={() => setReplyTo(msg)} style={{ fontSize: 10, color: C.subtext, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>↩️</button>
-                  {isAdmin && msg.type === 'text' && <button onClick={() => pinMessage(msg.id)} style={{ fontSize: 10, color: C.subtext, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>📌</button>}
-                </div>
+                {confirmDeleteId === msg.id ? (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                    <span style={{ fontSize: 10, color: '#E63946', fontWeight: 700 }}>Supprimer ?</span>
+                    <button onClick={() => { deleteMessage(msg.id); setConfirmDeleteId(null); }} style={{ fontSize: 10, color: '#fff', background: '#E63946', border: 'none', borderRadius: 6, padding: '2px 8px', cursor: 'pointer', fontWeight: 700 }}>Oui</button>
+                    <button onClick={() => setConfirmDeleteId(null)} style={{ fontSize: 10, color: C.subtext, background: 'none', border: 'none', cursor: 'pointer' }}>Annuler</button>
+                  </div>
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2, justifyContent: isOwn ? 'flex-end' : 'flex-start' }}>
+                    <p style={{ margin: 0, fontSize: 9, color: C.subtext }}>{msg.time}</p>
+                    <button onClick={() => setReplyTo(msg)} style={{ fontSize: 10, color: C.subtext, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>↩️</button>
+                    {isAdmin && msg.type === 'text' && <button onClick={() => pinMessage(msg.id)} style={{ fontSize: 10, color: C.subtext, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>📌</button>}
+                    {(isOwn || isAdmin) && <button onClick={() => setConfirmDeleteId(msg.id)} style={{ fontSize: 10, color: C.subtext, background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>🗑️</button>}
+                  </div>
+                )}
               </div>
             </div>
           );

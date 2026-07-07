@@ -4,11 +4,30 @@ import {
   updateDoc, deleteDoc, onSnapshot, serverTimestamp,
   query, orderBy, arrayUnion, arrayRemove, where, writeBatch,
 } from 'firebase/firestore';
-import { db } from '../firebase';
+import { db, auth } from '../firebase';
 import { useAuth } from './AuthContext';
 import { generateInviteCode, generateId } from '../utils/helpers';
 
 const TontineContext = createContext();
+
+// Fires a push notification to the other members of a tontine via the
+// serverless endpoint. Deliberately swallows errors: a notification that
+// fails to send should never block the chat message / poll / penalty it's
+// attached to. Also does nothing gracefully if the person hasn't granted
+// notification permission (no token = nothing to call).
+async function triggerNotification(tontineId, title, body) {
+  try {
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) return;
+    await fetch('/api/notify-event', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${idToken}` },
+      body: JSON.stringify({ tontineId, title, body }),
+    });
+  } catch (err) {
+    console.log('Notification non envoyée (non bloquant) :', err.message);
+  }
+}
 
 export function TontineProvider({ children }) {
   const { user, userProfile, updateUserProfile, registerDeleteCleanup } = useAuth();
@@ -324,6 +343,11 @@ export function TontineProvider({ children }) {
         type: 'system', pinned: false, createdAt: serverTimestamp(),
         time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       });
+      triggerNotification(
+        activeTontineId,
+        `⚠️ Pénalité — ${activeTontine.name}`,
+        `${memberName} a été pénalisé(e) de ${activeTontine.penaltyAmount.toLocaleString()} FCFA.`
+      );
     }
   };
 
@@ -350,6 +374,8 @@ export function TontineProvider({ children }) {
       time: new Date().toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }),
       ...extra,
     });
+    const preview = type === 'text' ? content : type === 'image' ? '📷 Photo' : '🎤 Message vocal';
+    triggerNotification(activeTontineId, `💬 ${userProfile.name} — ${activeTontine?.name}`, preview);
   };
 
   // Pin message (admin only - enforced by rules via authorId check fallback)
@@ -362,6 +388,12 @@ export function TontineProvider({ children }) {
     );
   };
 
+  // Anyone can delete their own message; an admin can delete any message --
+  // matches the Firestore rule exactly, so this never fails silently.
+  const deleteMessage = async (msgId) => {
+    await deleteDoc(doc(db, 'ts_tontines', activeTontineId, 'chat', msgId));
+  };
+
   // Create poll (admin only - enforced by rules)
   const createPoll = async (question, options) => {
     await addDoc(collection(db, 'ts_tontines', activeTontineId, 'polls'), {
@@ -370,6 +402,7 @@ export function TontineProvider({ children }) {
       createdBy: userProfile.name,
       createdAt: serverTimestamp(),
     });
+    triggerNotification(activeTontineId, `🗳️ Nouveau sondage — ${activeTontine?.name}`, question);
   };
 
   // Vote on poll
@@ -415,8 +448,37 @@ export function TontineProvider({ children }) {
   };
 
   // Update dev settings (MTN/Orange numbers) - restricted by rules to dev email
+  // Sends a problem report or suggestion to the developer. Context (who,
+  // which tontine, when) is captured automatically so the person doesn't
+  // have to explain their situation from scratch every time.
+  const submitFeedback = async (type, message) => {
+    if (!user || !message.trim()) return { success: false, error: 'Message vide' };
+    try {
+      await addDoc(collection(db, 'ts_feedback'), {
+        type, // 'problem' | 'suggestion'
+        message: message.trim(),
+        userId: user.uid,
+        userName: userProfile?.name || 'Inconnu',
+        userEmail: userProfile?.email || user.email || '',
+        tontineName: activeTontine?.name || null,
+        status: 'new',
+        createdAt: serverTimestamp(),
+      });
+      return { success: true };
+    } catch (err) {
+      console.error('submitFeedback failed:', err);
+      return { success: false, error: err.message };
+    }
+  };
+
   const updateDevSettings = async (data) => {
-    await setDoc(doc(db, 'ts_app_settings', 'dev'), data, { merge: true });
+    try {
+      await setDoc(doc(db, 'ts_app_settings', 'dev'), data, { merge: true });
+      return { success: true };
+    } catch (err) {
+      console.error('updateDevSettings failed:', err);
+      return { success: false, error: err.message };
+    }
   };
 
   // Used by AuthContext.deleteAccount to clean up membership before deleting the user
@@ -466,9 +528,9 @@ export function TontineProvider({ children }) {
       createTontine, joinTontine, becomeAdmin, leaveTontine,
       updateTontine, advanceCycle, deleteTontine, acceptRules,
       removeMember, updateMember, reorderMembers,
-      toggleParticipation, sendMessage, pinMessage,
+      toggleParticipation, sendMessage, pinMessage, deleteMessage,
       createPoll, votePoll, saveAid, addAidContribution,
-      updateDevSettings, leaveAllTontinesForDeletion,
+      updateDevSettings, submitFeedback, leaveAllTontinesForDeletion,
     }}>
       {children}
     </TontineContext.Provider>
