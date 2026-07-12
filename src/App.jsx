@@ -11,22 +11,26 @@ import {
 import SettingsTab from './components/SettingsTab';
 import { Spinner } from './components/UI';
 import { requestNotificationPermission, onForegroundMessage } from './utils/helpers';
+import {
+  Home, TrendingUp, Users, CheckSquare, MessageCircle,
+  Vote, HeartHandshake, History as HistoryIcon, Crown, User, Settings, Wrench, Bell,
+} from 'lucide-react';
 
 const DEV_EMAIL = 'bertolteuzong@gmail.com';
 
 const ALL_TABS = [
-  { id: 'home', icon: '🏠', fr: 'Accueil', en: 'Home' },
-  { id: 'stats', icon: '📈', fr: 'Stats', en: 'Stats' },
-  { id: 'members', icon: '👥', fr: 'Membres', en: 'Members' },
-  { id: 'participation', icon: '✅', fr: 'Particip.', en: 'Particip.' },
-  { id: 'chat', icon: '💬', fr: 'Chat', en: 'Chat' },
-  { id: 'polls', icon: '🗳️', fr: 'Sondages', en: 'Polls' },
-  { id: 'aid', icon: '🤝', fr: 'Aide', en: 'Aid' },
-  { id: 'history', icon: '📊', fr: 'Historique', en: 'History' },
-  { id: 'admin', icon: '👑', fr: 'Admin', en: 'Admin' },
-  { id: 'profile', icon: '👤', fr: 'Profil', en: 'Profile' },
-  { id: 'settings', icon: '⚙️', fr: 'Paramètres', en: 'Settings' },
-  { id: 'dev', icon: '🛠️', fr: 'Dev', en: 'Dev', devOnly: true },
+  { id: 'home', Icon: Home, fr: 'Accueil', en: 'Home' },
+  { id: 'stats', Icon: TrendingUp, fr: 'Stats', en: 'Stats' },
+  { id: 'members', Icon: Users, fr: 'Membres', en: 'Members' },
+  { id: 'participation', Icon: CheckSquare, fr: 'Particip.', en: 'Particip.' },
+  { id: 'chat', Icon: MessageCircle, fr: 'Chat', en: 'Chat' },
+  { id: 'polls', Icon: Vote, fr: 'Sondages', en: 'Polls' },
+  { id: 'aid', Icon: HeartHandshake, fr: 'Aide', en: 'Aid' },
+  { id: 'history', Icon: HistoryIcon, fr: 'Historique', en: 'History' },
+  { id: 'admin', Icon: Crown, fr: 'Admin', en: 'Admin' },
+  { id: 'profile', Icon: User, fr: 'Profil', en: 'Profile' },
+  { id: 'settings', Icon: Settings, fr: 'Paramètres', en: 'Settings' },
+  { id: 'dev', Icon: Wrench, fr: 'Dev', en: 'Dev', devOnly: true },
 ];
 
 function SideNav({ active, setActive }) {
@@ -44,30 +48,31 @@ function SideNav({ active, setActive }) {
 
   return (
     <div style={{
-      width: 66, background: C.navBg, display: 'flex', flexDirection: 'column',
-      alignItems: 'center', paddingTop: 10, paddingBottom: 10, gap: 2,
+      width: 70, background: C.navBg, display: 'flex', flexDirection: 'column',
+      alignItems: 'center', paddingTop: 12, paddingBottom: 12, gap: 6,
       boxShadow: '2px 0 12px rgba(0,0,0,0.07)', flexShrink: 0,
       overflowY: 'auto', scrollbarWidth: 'none',
     }}>
       {tabs.map(tab => {
         const isActive = active === tab.id;
+        const { Icon } = tab;
         return (
           <button key={tab.id} onClick={() => setActive(tab.id)} style={{
-            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 2,
-            width: 58, padding: '9px 3px', borderRadius: 14, border: 'none',
+            display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3,
+            width: 58, padding: '9px 3px', borderRadius: 16, border: 'none',
             cursor: 'pointer',
-            background: isActive ? color + '20' : 'transparent',
-            transition: 'background 0.2s',
+            background: isActive ? color : 'transparent',
+            boxShadow: isActive ? `0 4px 12px ${color}55` : 'none',
+            transition: 'all 0.2s',
           }}>
-            <span style={{ fontSize: 20 }}>{tab.icon}</span>
+            <Icon size={20} strokeWidth={2.2} color={isActive ? '#fff' : C.subtext} />
             <span style={{
               fontSize: 8, fontWeight: 700,
-              color: isActive ? color : C.subtext,
+              color: isActive ? '#fff' : C.subtext,
               textAlign: 'center', lineHeight: 1.2, wordBreak: 'break-word',
             }}>
               {lang === 'fr' ? tab.fr : tab.en}
             </span>
-            {isActive && <div style={{ width: 4, height: 4, borderRadius: '50%', background: color }} />}
           </button>
         );
       })}
@@ -266,13 +271,11 @@ function MainApp() {
 
   useEffect(() => {
     if (user) {
-      requestNotificationPermission().then(token => {
-        // Only write when it actually changed, to avoid a pointless Firestore
-        // write on every mount (the token is usually stable across sessions).
-        if (token && token !== userProfile?.fcmToken) {
-          updateUserProfile({ fcmToken: token });
-        }
-      });
+      // Notification permission is now requested from an explicit button in
+      // Settings instead of automatically here. iOS Safari specifically
+      // REQUIRES the permission prompt to be triggered by a direct user
+      // gesture (a click) -- requesting it automatically on page load is
+      // silently ignored on iOS, so this used to never actually work there.
       const unsub = onForegroundMessage((payload) => {
         console.log('Notification reçue:', payload);
       });
@@ -333,8 +336,13 @@ function MainApp() {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 7 }}>
             <div>
-              <h2 style={{ color: '#fff', margin: 0, fontSize: 15, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 6 }}>
-                <span>{theme.icon}</span> Tontine Structurelle
+              <h2 style={{ color: '#fff', margin: 0, fontSize: 15, fontWeight: 900, display: 'flex', alignItems: 'center', gap: 8 }}>
+                <span style={{
+                  width: 28, height: 28, borderRadius: 9, background: 'rgba(255,255,255,0.22)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 15,
+                  boxShadow: '0 2px 8px rgba(0,0,0,0.15)', flexShrink: 0,
+                }}>{theme.icon}</span>
+                Tontine Structurelle
               </h2>
               <p style={{ color: 'rgba(255,255,255,0.8)', margin: 0, fontSize: 11 }}>
                 {activeTontine?.name}
@@ -347,8 +355,8 @@ function MainApp() {
                 </span>
               )}
               <div style={{ position: 'relative' }}>
-                <span style={{ fontSize: 19 }}>🔔</span>
-                <div style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, background: '#FF9F1C', borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)' }} />
+                <Bell size={19} color="#fff" strokeWidth={2.2} />
+                <div style={{ position: 'absolute', top: -2, right: -2, width: 8, height: 8, background: theme.secondary, borderRadius: '50%', border: '2px solid rgba(255,255,255,0.8)' }} />
               </div>
             </div>
           </div>

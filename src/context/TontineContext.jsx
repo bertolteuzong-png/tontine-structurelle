@@ -217,6 +217,23 @@ export function TontineProvider({ children }) {
     });
   };
 
+  // Demotes a promoted admin back to a regular member. Restricted to the
+  // super admin (the tontine's creator) -- other admins cannot demote each
+  // other, only the person who originally holds ultimate ownership can.
+  // The person's member record and membership are untouched, so they simply
+  // become "just a member" again automatically once adminIds no longer
+  // includes them.
+  const removeAdmin = async (uid) => {
+    if (!activeTontine) throw new Error('Aucune tontine active');
+    if (activeTontine.superAdminId !== user?.uid)
+      throw new Error('Seul le super administrateur peut retirer un administrateur.');
+    if (uid === activeTontine.superAdminId)
+      throw new Error('Impossible de retirer le super administrateur.');
+    await updateDoc(doc(db, 'ts_tontines', activeTontineId), {
+      adminIds: arrayRemove(uid),
+    });
+  };
+
   // Leave tontine
   const leaveTontine = async () => {
     if (!activeTontineId || !user || !activeTontine) return;
@@ -362,11 +379,16 @@ export function TontineProvider({ children }) {
 
   // Send chat message
   const sendMessage = async (content, type = 'text', extra = {}) => {
+    // Reuse the sender's own member-list color (already assigned uniquely
+    // per person at join time) so names are visually distinguishable in the
+    // chat, instead of every single message being tagged with the same
+    // hardcoded color regardless of who sent it.
+    const ownColor = members.find(m => m.uid === user.uid)?.color || '#7B2FBE';
     await addDoc(collection(db, 'ts_tontines', activeTontineId, 'chat'), {
       author: userProfile.name,
       authorId: user.uid,
       av: userProfile.name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase(),
-      color: '#7B2FBE',
+      color: ownColor,
       text: content,
       type,
       pinned: false,
@@ -525,7 +547,7 @@ export function TontineProvider({ children }) {
       tontines, activeTontineId, setActiveTontineId,
       activeTontine, isAdmin, members, chat, history, polls, aid,
       loading, devSettings,
-      createTontine, joinTontine, becomeAdmin, leaveTontine,
+      createTontine, joinTontine, becomeAdmin, removeAdmin, leaveTontine,
       updateTontine, advanceCycle, deleteTontine, acceptRules,
       removeMember, updateMember, reorderMembers,
       toggleParticipation, sendMessage, pinMessage, deleteMessage,

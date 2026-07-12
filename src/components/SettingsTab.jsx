@@ -1,21 +1,37 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTontine } from '../context/TontineContext';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 import { Pill, Toggle, Badge } from './UI';
 import ThemeSelector from './ThemeSelector';
+import {
+  Landmark, Wallet, RefreshCw, AlertTriangle, Bell, HeartHandshake,
+  ScrollText, Trash2, DoorOpen, Palette, Globe, Crown, Smartphone,
+  Info, Share2, MessageCircle, ChevronDown,
+} from 'lucide-react';
+import { isStandalone, isIOS, canPromptInstall, onInstallAvailabilityChange, promptInstall } from '../utils/installPrompt';
+import { requestNotificationPermission } from '../utils/helpers';
 
 // IMPORTANT: this is declared OUTSIDE SettingsTab so React doesn't recreate
 // (and therefore remount) it on every keystroke. Recreating it inline was the
 // cause of every text input "freezing" after one character.
-function Sec({ id, icon, title, open, onToggle, C, children }) {
+function Sec({ id, Icon, title, open, onToggle, C, children }) {
+  const isOpen = open === id;
   return (
     <div style={{ background: C.card, borderRadius: 18, marginBottom: 9, overflow: 'hidden', boxShadow: '0 4px 16px rgba(0,0,0,0.07)' }}>
-      <button onClick={() => onToggle(id)} style={{ width: '100%', padding: '14px 15px', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer' }}>
-        <span style={{ fontWeight: 700, fontSize: 13, color: C.text }}>{icon} {title}</span>
-        <span style={{ color: C.subtext, fontSize: 17, display: 'inline-block', transform: open === id ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>▾</span>
+      <button onClick={() => onToggle(id)} style={{ width: '100%', padding: '12px 15px', background: 'none', border: 'none', display: 'flex', justifyContent: 'space-between', alignItems: 'center', cursor: 'pointer', gap: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, minWidth: 0 }}>
+          <div style={{
+            width: 36, height: 36, borderRadius: 12, background: C.primary + '18',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+          }}>
+            {Icon && <Icon size={18} color={C.primary} strokeWidth={2.2} />}
+          </div>
+          <span style={{ fontWeight: 700, fontSize: 13, color: C.text, textAlign: 'left' }}>{title}</span>
+        </div>
+        <ChevronDown size={18} color={C.subtext} style={{ transform: isOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }} />
       </button>
-      {open === id && <div style={{ padding: '0 15px 15px' }}>{children}</div>}
+      {isOpen && <div style={{ padding: '0 15px 15px' }}>{children}</div>}
     </div>
   );
 }
@@ -26,10 +42,11 @@ export default function SettingsTab() {
     isAdmin, updateTontine, deleteTontine, leaveTontine,
     createTontine, joinTontine, becomeAdmin, advanceCycle, submitFeedback,
   } = useTontine();
-  const { logout } = useAuth();
+  const { logout, userProfile, updateUserProfile } = useAuth();
   const { C, t, lang, setLang } = useTheme();
 
   const [open, setOpen] = useState(null);
+  const [tontineNameEdit, setTontineNameEdit] = useState('');
   const [amount, setAmount] = useState('');
   const [frequency, setFrequency] = useState('');
   const [totalCycles, setTotalCycles] = useState('');
@@ -48,6 +65,13 @@ export default function SettingsTab() {
   const [feedbackType, setFeedbackType] = useState('problem');
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [feedbackState, setFeedbackState] = useState('idle');
+  const [installable, setInstallable] = useState(canPromptInstall());
+  const [installResult, setInstallResult] = useState('');
+  const [notifState, setNotifState] = useState(
+    typeof Notification !== 'undefined' ? Notification.permission : 'unsupported'
+  );
+
+  useEffect(() => onInstallAvailabilityChange(setInstallable), []);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
@@ -69,7 +93,7 @@ export default function SettingsTab() {
       {error && <div style={{ background: '#E63946', color: '#fff', padding: '10px 16px', borderRadius: 12, marginBottom: 12, fontWeight: 700, fontSize: 13 }}>❌ {error}</div>}
 
       {/* Mes tontines */}
-      <Sec id="tontines" icon="🏦" title={t.myTontines} open={open} onToggle={tog} C={C}>
+      <Sec id="tontines" Icon={Landmark} title={t.myTontines} open={open} onToggle={tog} C={C}>
         {tontines.map(tt => (
           <button key={tt.id} onClick={() => setActiveTontineId(tt.id)} style={{ width: '100%', padding: '10px 12px', borderRadius: 12, border: `2px solid ${tt.id === activeTontineId ? tt.color : C.border}`, cursor: 'pointer', marginBottom: 7, background: tt.id === activeTontineId ? tt.color + '10' : C.bg, display: 'flex', alignItems: 'center', gap: 9 }}>
             <div style={{ width: 9, height: 9, borderRadius: '50%', background: tt.color }} />
@@ -110,7 +134,9 @@ export default function SettingsTab() {
 
       {isAdmin && (
         <>
-          <Sec id="cotisation" icon="💰" title={t.cotisationFreq} open={open} onToggle={tog} C={C}>
+          <Sec id="cotisation" Icon={Wallet} title={t.cotisationFreq} open={open} onToggle={tog} C={C}>
+            <p style={{ fontSize: 11, color: C.subtext, margin: '0 0 5px', fontWeight: 600 }}>Nom de la tontine</p>
+            <input style={inp} placeholder={tn?.name} value={tontineNameEdit} onChange={e => setTontineNameEdit(e.target.value)} />
             <p style={{ fontSize: 11, color: C.subtext, margin: '0 0 5px', fontWeight: 600 }}>{t.amount}</p>
             <input style={inp} type="number" placeholder={`Actuel : ${tn?.amount || 2500} FCFA`} value={amount} onChange={e => setAmount(e.target.value)} />
             <p style={{ fontSize: 11, color: C.subtext, margin: '0 0 7px', fontWeight: 600 }}>{t.frequency}</p>
@@ -129,6 +155,7 @@ export default function SettingsTab() {
             <input style={inp} type="time" value={deadline || tn?.deadline || '18:00'} onChange={e => setDeadline(e.target.value)} />
             <Pill text={t.save} color={C.primary} onClick={async () => {
               const data = {};
+              if (tontineNameEdit.trim()) data.name = tontineNameEdit.trim();
               if (amount) data.amount = parseInt(amount);
               if (frequency) data.frequency = frequency;
               if (totalCycles) data.totalCycles = parseInt(totalCycles);
@@ -137,12 +164,12 @@ export default function SettingsTab() {
               if (deadline) data.deadline = deadline;
               if (Object.keys(data).length === 0) return showError('Aucune modification détectée');
               await updateTontine(data);
-              setAmount(''); setTotalCycles(''); setDepositPhone('');
+              setTontineNameEdit(''); setAmount(''); setTotalCycles(''); setDepositPhone('');
               showSuccess('Paramètres sauvegardés !');
             }} />
           </Sec>
 
-          <Sec id="cycle" icon="🔄" title="Gestion du cycle" open={open} onToggle={tog} C={C}>
+          <Sec id="cycle" Icon={RefreshCw} title="Gestion du cycle" open={open} onToggle={tog} C={C}>
             <div style={{ background: '#3A86FF12', borderRadius: 12, padding: 14, marginBottom: 12, border: '1px solid #3A86FF33' }}>
               <p style={{ margin: '0 0 8px', fontSize: 13, color: C.text }}>
                 Cycle actuel : <strong>{tn?.currentCycle || 1} / {tn?.totalCycles || 10}</strong>
@@ -166,7 +193,7 @@ export default function SettingsTab() {
             )}
           </Sec>
 
-          <Sec id="penalty" icon="⚠️" title={t.penalties} open={open} onToggle={tog} C={C}>
+          <Sec id="penalty" Icon={AlertTriangle} title={t.penalties} open={open} onToggle={tog} C={C}>
             <p style={{ fontSize: 11, color: C.subtext, margin: '0 0 5px', fontWeight: 600 }}>{t.penaltyAmount}</p>
             <input style={inp} type="number" placeholder={`Actuel : ${tn?.penaltyAmount || 500} FCFA`} value={penaltyAmount} onChange={e => setPenaltyAmount(e.target.value)} />
             <p style={{ fontSize: 11, color: C.subtext, margin: '0 0 10px', lineHeight: 1.6 }}>
@@ -187,7 +214,7 @@ export default function SettingsTab() {
             }} />
           </Sec>
 
-          <Sec id="reminders" icon="🔔" title={t.reminders} open={open} onToggle={tog} C={C}>
+          <Sec id="reminders" Icon={Bell} title={t.reminders} open={open} onToggle={tog} C={C}>
             <p style={{ fontSize: 12, color: C.subtext, margin: '0 0 12px' }}>
               ⚠️ Ces réglages préparent les rappels mais l'envoi automatique réel nécessite
               un service serveur (Firebase Cloud Functions) qui n'est pas encore branché.
@@ -202,7 +229,7 @@ export default function SettingsTab() {
             ))}
           </Sec>
 
-          <Sec id="aid" icon="🤝" title={t.aid} open={open} onToggle={tog} C={C}>
+          <Sec id="aid" Icon={HeartHandshake} title={t.aid} open={open} onToggle={tog} C={C}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '4px 0' }}>
               <div>
                 <p style={{ margin: 0, fontSize: 13, fontWeight: 700, color: C.text }}>{t.aidToggle}</p>
@@ -212,7 +239,7 @@ export default function SettingsTab() {
             </div>
           </Sec>
 
-          <Sec id="rules" icon="📜" title={t.tontineRules} open={open} onToggle={tog} C={C}>
+          <Sec id="rules" Icon={ScrollText} title={t.tontineRules} open={open} onToggle={tog} C={C}>
             <p style={{ fontSize: 12, color: C.subtext, margin: '0 0 8px' }}>Ces règles seront affichées à tous les membres. Un membre ne pourra accéder à la tontine qu'après les avoir acceptées (si vous en définissez).</p>
             <textarea
               placeholder={tn?.rules || 'Rédigez les règles de votre tontine ici...'}
@@ -232,7 +259,7 @@ export default function SettingsTab() {
             }} />
           </Sec>
 
-          <Sec id="danger" icon="🗑️" title={t.dangerZone} open={open} onToggle={tog} C={C}>
+          <Sec id="danger" Icon={Trash2} title={t.dangerZone} open={open} onToggle={tog} C={C}>
             <div style={{ background: '#FF9F1C15', borderRadius: 12, padding: 14, marginBottom: 12, border: '1px solid #FF9F1C33' }}>
               <p style={{ margin: '0 0 5px', fontWeight: 700, color: '#FF9F1C', fontSize: 13 }}>🚪 Quitter cette tontine</p>
               <p style={{ margin: '0 0 10px', fontSize: 12, color: C.subtext }}>
@@ -274,7 +301,7 @@ export default function SettingsTab() {
       )}
 
       {!isAdmin && (
-        <Sec id="danger-member" icon="🚪" title="Zone dangereuse" open={open} onToggle={tog} C={C}>
+        <Sec id="danger-member" Icon={DoorOpen} title="Zone dangereuse" open={open} onToggle={tog} C={C}>
           <div style={{ background: '#FF9F1C15', borderRadius: 12, padding: 14, border: '1px solid #FF9F1C33' }}>
             <p style={{ margin: '0 0 5px', fontWeight: 700, color: '#FF9F1C', fontSize: 13 }}>🚪 Quitter cette tontine</p>
             <p style={{ margin: '0 0 10px', fontSize: 12, color: C.subtext }}>Vous serez retiré de la tontine et tous les membres seront notifiés.</p>
@@ -296,11 +323,11 @@ export default function SettingsTab() {
         </Sec>
       )}
 
-      <Sec id="theme" icon="🎨" title={t.theme} open={open} onToggle={tog} C={C}>
+      <Sec id="theme" Icon={Palette} title={t.theme} open={open} onToggle={tog} C={C}>
         <ThemeSelector />
       </Sec>
 
-      <Sec id="lang" icon="🌍" title={t.language} open={open} onToggle={tog} C={C}>
+      <Sec id="lang" Icon={Globe} title={t.language} open={open} onToggle={tog} C={C}>
         <div style={{ display: 'flex', gap: 9 }}>
           {[['fr','🇫🇷 Français'],['en','🇬🇧 English']].map(([v,l]) => (
             <button key={v} onClick={() => setLang(v)} style={{ flex: 1, padding: 11, borderRadius: 12, border: `2px solid ${lang === v ? C.primary : C.border}`, background: lang === v ? C.primary + '10' : C.card, color: lang === v ? C.primary : C.text, fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>{l}</button>
@@ -309,7 +336,7 @@ export default function SettingsTab() {
       </Sec>
 
       {!isAdmin && (
-        <Sec id="become" icon="👑" title={t.becomeAdmin} open={open} onToggle={tog} C={C}>
+        <Sec id="become" Icon={Crown} title={t.becomeAdmin} open={open} onToggle={tog} C={C}>
           <p style={{ fontSize: 12, color: C.subtext, margin: '0 0 8px' }}>{t.becomeAdminInfo}</p>
           <input style={inp} placeholder={t.adminCode} value={adminCode} onChange={e => setAdminCode(e.target.value)} />
           <Pill text={t.validate} color={C.primary} onClick={async () => {
@@ -320,7 +347,73 @@ export default function SettingsTab() {
         </Sec>
       )}
 
-      <Sec id="about" icon="ℹ️" title={t.aboutApp} open={open} onToggle={tog} C={C}>
+      <Sec id="notifs" Icon={Bell} title="Notifications" open={open} onToggle={tog} C={C}>
+        {notifState === 'unsupported' ? (
+          <p style={{ fontSize: 13, color: C.subtext, margin: 0 }}>Les notifications ne sont pas supportées sur ce navigateur.</p>
+        ) : notifState === 'granted' ? (
+          <p style={{ fontSize: 13, color: '#2DC653', fontWeight: 700, margin: 0 }}>✅ Notifications activées sur cet appareil.</p>
+        ) : notifState === 'denied' ? (
+          <p style={{ fontSize: 13, color: C.subtext, margin: 0, lineHeight: 1.6 }}>
+            🔕 Notifications bloquées. Pour les réactiver, allez dans les réglages de votre navigateur pour ce site et autorisez les notifications.
+          </p>
+        ) : (
+          <>
+            {isIOS() && !isStandalone() && (
+              <div style={{ background: '#FFF8E1', border: '1px solid #FFD54F', borderRadius: 12, padding: '10px 14px', marginBottom: 12 }}>
+                <p style={{ margin: 0, fontSize: 12, color: '#E65100', lineHeight: 1.6 }}>
+                  ⚠️ Sur iPhone/iPad, les notifications ne fonctionnent que si l'application est installée (voir ci-dessous). Installez-la d'abord.
+                </p>
+              </div>
+            )}
+            <p style={{ fontSize: 13, color: C.subtext, margin: '0 0 12px' }}>
+              Activez les notifications pour être prévenu des nouveaux messages, sondages et rappels de cotisation.
+            </p>
+            <Pill text="🔔 Activer les notifications" color={C.primary} onClick={async () => {
+              const token = await requestNotificationPermission();
+              setNotifState(typeof Notification !== 'undefined' ? Notification.permission : 'unsupported');
+              if (token) {
+                await updateUserProfile({ fcmToken: token });
+                showSuccess('Notifications activées !');
+              }
+            }} />
+          </>
+        )}
+      </Sec>
+
+      <Sec id="install" Icon={Smartphone} title="Installer l'application" open={open} onToggle={tog} C={C}>
+        {isStandalone() ? (
+          <p style={{ fontSize: 13, color: '#2DC653', fontWeight: 700, margin: 0 }}>✅ L'application est déjà installée sur cet appareil.</p>
+        ) : isIOS() ? (
+          <div>
+            <p style={{ fontSize: 13, color: C.text, margin: '0 0 10px', lineHeight: 1.6 }}>
+              Sur iPhone/iPad, Apple ne permet pas d'installer directement par bouton. Voici comment faire :
+            </p>
+            <ol style={{ margin: 0, paddingLeft: 18, fontSize: 13, color: C.subtext, lineHeight: 1.9 }}>
+              <li>Appuyez sur l'icône <strong>Partager</strong> (le carré avec une flèche) en bas de Safari</li>
+              <li>Faites défiler et choisissez <strong>"Sur l'écran d'accueil"</strong></li>
+              <li>Appuyez sur <strong>"Ajouter"</strong></li>
+            </ol>
+          </div>
+        ) : installable ? (
+          <>
+            <p style={{ fontSize: 13, color: C.subtext, margin: '0 0 12px' }}>
+              Installez l'application directement sur votre appareil pour y accéder comme une vraie application, avec son icône.
+            </p>
+            <Pill text="📲 Installer maintenant" color={C.primary} onClick={async () => {
+              const result = await promptInstall();
+              setInstallResult(result.outcome === 'accepted' ? 'success' : result.outcome === 'dismissed' ? 'dismissed' : '');
+            }} />
+            {installResult === 'success' && <p style={{ margin: '10px 0 0', fontSize: 12, color: '#2DC653' }}>✅ Installation en cours...</p>}
+            {installResult === 'dismissed' && <p style={{ margin: '10px 0 0', fontSize: 12, color: C.subtext }}>Installation annulée.</p>}
+          </>
+        ) : (
+          <p style={{ fontSize: 13, color: C.subtext, margin: 0, lineHeight: 1.6 }}>
+            Utilisez le menu de votre navigateur (généralement les trois points ⋮) puis "Installer l'application" ou "Ajouter à l'écran d'accueil".
+          </p>
+        )}
+      </Sec>
+
+      <Sec id="about" Icon={Info} title={t.aboutApp} open={open} onToggle={tog} C={C}>
         <div style={{ textAlign: 'center', marginBottom: 14 }}>
           <div style={{ fontSize: 40 }}>🇨🇲</div>
         </div>
@@ -339,7 +432,7 @@ export default function SettingsTab() {
         </div>
       </Sec>
 
-      <Sec id="share" icon="📤" title="Partager l'application" open={open} onToggle={tog} C={C}>
+      <Sec id="share" Icon={Share2} title="Partager l'application" open={open} onToggle={tog} C={C}>
         <p style={{ fontSize: 12, color: C.subtext, margin: '0 0 12px', lineHeight: 1.6 }}>
           Faites découvrir Tontine Structurelle à votre entourage.
         </p>
@@ -358,7 +451,7 @@ export default function SettingsTab() {
         }} />
       </Sec>
 
-      <Sec id="feedback" icon="💬" title="Aide & Suggestions" open={open} onToggle={tog} C={C}>
+      <Sec id="feedback" Icon={MessageCircle} title="Aide & Suggestions" open={open} onToggle={tog} C={C}>
         <p style={{ fontSize: 12, color: C.subtext, margin: '0 0 12px', lineHeight: 1.6 }}>
           Un problème avec l'application ? Une idée pour l'améliorer ? Écrivez-nous, votre message nous parvient directement.
         </p>

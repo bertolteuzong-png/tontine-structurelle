@@ -88,10 +88,10 @@ export function HomeTab() {
       )}
 
       {current && (
-        <Card C={C} style={{ background: '#FF9F1C12', border: '2px solid #FF9F1C' }}>
-          <p style={{ margin: '0 0 8px', fontSize: 10, color: '#FF9F1C', fontWeight: 700, letterSpacing: 1 }}>🍽️ {t.whoEats}</p>
+        <Card C={C} style={{ background: `${C.secondary}15`, border: `2px solid ${C.secondary}` }}>
+          <p style={{ margin: '0 0 8px', fontSize: 10, color: C.secondary, fontWeight: 700, letterSpacing: 1 }}>🍽️ {t.whoEats}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-            <Av initials={current.name.split(' ').map(w => w[0]).join('').slice(0, 2)} color="#FF9F1C" size={48} flag />
+            <Av initials={current.name.split(' ').map(w => w[0]).join('').slice(0, 2)} color={C.secondary} size={48} flag />
             <div>
               <p style={{ margin: 0, fontWeight: 800, fontSize: 16, color: C.text }}>{current.name}</p>
               <p style={{ margin: '2px 0 0', fontSize: 12, color: C.subtext }}>📅 {current.date} · ⏰ {tn.deadline || '18h00'}</p>
@@ -104,7 +104,7 @@ export function HomeTab() {
         <Card C={C}>
           <p style={{ margin: '0 0 6px', fontSize: 10, color: C.subtext, fontWeight: 700, letterSpacing: 1 }}>⏭️ {t.next}</p>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Av initials={next.name.split(' ').map(w => w[0]).join('').slice(0, 2)} color="#2EC4B6" size={38} flag />
+            <Av initials={next.name.split(' ').map(w => w[0]).join('').slice(0, 2)} color={C.primary} size={38} flag />
             <div>
               <p style={{ margin: 0, fontWeight: 700, color: C.text }}>{next.name}</p>
               <p style={{ margin: 0, fontSize: 12, color: C.subtext }}>📅 {next.date}</p>
@@ -114,14 +114,14 @@ export function HomeTab() {
       )}
 
       {aid?.active && (
-        <Card C={C} color="#7B2FBE">
-          <p style={{ margin: '0 0 6px', fontSize: 10, color: '#7B2FBE', fontWeight: 700, letterSpacing: 1 }}>🤝 {t.aidOngoing}</p>
+        <Card C={C} color={C.accent}>
+          <p style={{ margin: '0 0 6px', fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: 1 }}>🤝 {t.aidOngoing}</p>
           <p style={{ margin: '0 0 8px', fontWeight: 800, fontSize: 14, color: C.text }}>{aid.title}</p>
           <div style={{ background: C.border, borderRadius: 10, overflow: 'hidden', height: 10 }}>
-            <div style={{ width: `${Math.min(100, (aid.collected / aid.goal) * 100)}%`, height: '100%', background: 'linear-gradient(90deg,#7B2FBE,#2EC4B6)', borderRadius: 10 }} />
+            <div style={{ width: `${Math.min(100, (aid.collected / aid.goal) * 100)}%`, height: '100%', background: `linear-gradient(90deg,${C.accent},${C.primary})`, borderRadius: 10 }} />
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 6 }}>
-            <span style={{ fontSize: 12, fontWeight: 800, color: '#7B2FBE' }}>{fmt(aid.collected)}</span>
+            <span style={{ fontSize: 12, fontWeight: 800, color: C.accent }}>{fmt(aid.collected)}</span>
             <span style={{ fontSize: 11, color: C.subtext }}>/ {fmt(aid.goal)}</span>
           </div>
         </Card>
@@ -131,13 +131,13 @@ export function HomeTab() {
         <p style={{ margin: '0 0 10px', fontWeight: 800, fontSize: 14, color: C.text }}>📅 {t.rotationCal}</p>
         {rotation.map((r, i) => (
           <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '9px 0', borderBottom: i < rotation.length - 1 ? `1px solid ${C.border}` : 'none' }}>
-            <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, background: r.status === 'done' ? C.border : r.status === 'current' ? '#FF9F1C' : C.bg, color: r.status === 'current' ? '#fff' : r.status === 'done' ? C.subtext : C.text }}>{r.pos}</div>
+            <div style={{ width: 28, height: 28, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 800, background: r.status === 'done' ? C.border : r.status === 'current' ? C.secondary : C.bg, color: r.status === 'current' ? '#fff' : r.status === 'done' ? C.subtext : C.text }}>{r.pos}</div>
             <div style={{ flex: 1 }}>
               <p style={{ margin: 0, fontWeight: 700, fontSize: 13, color: r.status === 'done' ? C.subtext : C.text, textDecoration: r.status === 'done' ? 'line-through' : 'none' }}>{r.name}</p>
               <p style={{ margin: 0, fontSize: 11, color: C.subtext }}>{r.date}</p>
             </div>
             {r.status === 'done' && <span>✅</span>}
-            {r.status === 'current' && <Badge text={t.inProgress} color="#FF9F1C" />}
+            {r.status === 'current' && <Badge text={t.inProgress} color={C.secondary} />}
             {r.status === 'upcoming' && <span style={{ fontSize: 11, color: C.subtext }}>{t.upcoming}</span>}
           </div>
         ))}
@@ -254,7 +254,7 @@ export function ParticipationTab() {
         <div style={{ flex: 1 }}><p style={{ margin: 0, fontSize: 10, fontWeight: 700, color: C.subtext, letterSpacing: 1 }}>MEMBRE</p></div>
         <span style={{ fontSize: 12, fontWeight: 800, color: '#2DC653', width: 36, textAlign: 'center' }}>C</span>
         <span style={{ fontSize: 12, fontWeight: 800, color: '#E63946', width: 36, textAlign: 'center' }}>NC</span>
-        <span style={{ fontSize: 12, fontWeight: 800, color: '#7B2FBE', width: 36, textAlign: 'center' }}>🧾</span>
+        <span style={{ fontSize: 12, fontWeight: 800, color: C.accent, width: 36, textAlign: 'center' }}>🧾</span>
       </div>
 
       {members.map(m => (
@@ -274,7 +274,7 @@ export function ParticipationTab() {
                 </button>
               );
             })}
-            <button onClick={() => m.paid && exportReceiptPDF(m.name, tn?.amount || 0, tn?.name || '', new Date().toLocaleDateString('fr-FR'))} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: m.paid ? 'pointer' : 'default', background: m.paid ? '#7B2FBE15' : '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
+            <button onClick={() => m.paid && exportReceiptPDF(m.name, tn?.amount || 0, tn?.name || '', new Date().toLocaleDateString('fr-FR'))} style={{ width: 34, height: 34, borderRadius: '50%', border: 'none', cursor: m.paid ? 'pointer' : 'default', background: m.paid ? `${C.accent}15` : '#f5f5f5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 14 }}>
               {m.paid ? '🧾' : '—'}
             </button>
           </div>
@@ -406,9 +406,9 @@ export function ChatTab() {
 
           return (
             <div key={msg.id} style={{ display: 'flex', flexDirection: isOwn ? 'row-reverse' : 'row', alignItems: 'flex-end', gap: 8, marginBottom: 10 }}>
-              {!isOwn && <Av initials={msg.av || '?'} color={msg.color || '#7B2FBE'} size={28} />}
+              {!isOwn && <Av initials={msg.av || '?'} color={msg.color || C.primary} size={28} />}
               <div style={{ maxWidth: '72%' }}>
-                {!isOwn && <p style={{ margin: '0 0 3px', fontSize: 10, fontWeight: 700, color: msg.color || '#7B2FBE', paddingLeft: 4 }}>{msg.author}</p>}
+                {!isOwn && <p style={{ margin: '0 0 3px', fontSize: 10, fontWeight: 700, color: msg.color || C.primary, paddingLeft: 4 }}>{msg.author}</p>}
                 <div style={{ background: isOwn ? `linear-gradient(135deg,${tn?.color},${tn?.color}cc)` : bc, color: '#fff', borderRadius: isOwn ? '18px 18px 4px 18px' : '18px 18px 18px 4px', padding: msg.type === 'image' ? '4px' : '9px 13px', boxShadow: `0 3px 12px ${isOwn ? tn?.color : bc}44` }}>
                   {msg.replyTo && (
                     <div style={{
@@ -616,16 +616,16 @@ export function AidTab() {
   const pct = Math.min(100, Math.round((aid.collected / aid.goal) * 100));
   return (
     <div>
-      <Card C={C} style={{ background: '#7B2FBE10', border: '2px solid #7B2FBE' }}>
-        <p style={{ margin: '0 0 4px', fontSize: 10, color: '#7B2FBE', fontWeight: 700, letterSpacing: 1 }}>🤝 {t.aidOngoing}</p>
+      <Card C={C} style={{ background: `${C.accent}10`, border: `2px solid ${C.accent}` }}>
+        <p style={{ margin: '0 0 4px', fontSize: 10, color: C.accent, fontWeight: 700, letterSpacing: 1 }}>🤝 {t.aidOngoing}</p>
         <p style={{ margin: '0 0 4px', fontWeight: 800, fontSize: 15, color: C.text }}>{aid.title}</p>
         {aid.description && <p style={{ margin: '0 0 6px', fontSize: 12, color: C.subtext }}>{aid.description}</p>}
         {aid.deadline && <p style={{ margin: '0 0 10px', fontSize: 12, color: C.subtext }}>📅 Limite : {aid.deadline}</p>}
         <div style={{ background: C.border, borderRadius: 10, overflow: 'hidden', height: 12, marginBottom: 8 }}>
-          <div style={{ width: `${pct}%`, height: '100%', background: 'linear-gradient(90deg,#7B2FBE,#2EC4B6)', borderRadius: 10 }} />
+          <div style={{ width: `${pct}%`, height: '100%', background: `linear-gradient(90deg,${C.accent},${C.primary})`, borderRadius: 10 }} />
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 800, color: '#7B2FBE', fontSize: 13 }}>{fmt(aid.collected)}</span>
+          <span style={{ fontWeight: 800, color: C.accent, fontSize: 13 }}>{fmt(aid.collected)}</span>
           <span style={{ fontSize: 12, color: C.subtext }}>{pct}% / {fmt(aid.goal)}</span>
         </div>
         {isAdmin && <button onClick={() => saveAid({ ...aid, active: false })} style={{ marginTop: 12, padding: '8px 16px', borderRadius: 10, border: 'none', background: '#E6394615', color: '#E63946', fontWeight: 700, cursor: 'pointer', fontSize: 12 }}>Désactiver l'aide</button>}
@@ -644,7 +644,7 @@ export function AidTab() {
             {isAdmin && (
               <div style={{ display: 'flex', gap: 7, alignItems: 'center' }}>
                 <input type="number" placeholder="FCFA" value={amounts[m.id] || ''} onChange={e => setAmounts({ ...amounts, [m.id]: e.target.value })} style={{ width: 72, padding: '7px', borderRadius: 10, border: `2px solid ${C.border}`, fontSize: 12, background: C.inputBg, color: C.text, outline: 'none' }} />
-                <button onClick={async () => { const a = parseInt(amounts[m.id] || 0); if (!a) return; await addAidContribution(m.name, a); setAmounts({ ...amounts, [m.id]: '' }); }} style={{ padding: '7px 10px', borderRadius: 10, border: 'none', background: '#7B2FBE', color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: 12 }}>✓</button>
+                <button onClick={async () => { const a = parseInt(amounts[m.id] || 0); if (!a) return; await addAidContribution(m.name, a); setAmounts({ ...amounts, [m.id]: '' }); }} style={{ padding: '7px 10px', borderRadius: 10, border: 'none', background: C.accent, color: '#fff', cursor: 'pointer', fontWeight: 700, fontSize: 12 }}>✓</button>
               </div>
             )}
           </div>
@@ -762,10 +762,10 @@ export function StatsTab() {
         ))}
       </Card>
 
-      <Card C={C} color="#FF9F1C">
+      <Card C={C} color={C.secondary}>
         <p style={{ margin: '0 0 12px', fontWeight: 800, fontSize: 14, color: C.text }}>🏆 {t.topMembers}</p>
         {sorted.slice(0, 3).map((m, i) => (
-          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, padding: '10px 12px', borderRadius: 12, background: i === 0 ? '#FF9F1C15' : 'transparent' }}>
+          <div key={m.id} style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10, padding: '10px 12px', borderRadius: 12, background: i === 0 ? `${C.secondary}15` : 'transparent' }}>
             <span style={{ fontSize: 20 }}>{['🥇', '🥈', '🥉'][i] || '🏅'}</span>
             <Av initials={m.av} color={m.color} size={36} img={m.avatar} />
             <div style={{ flex: 1 }}>
@@ -781,25 +781,71 @@ export function StatsTab() {
 
 // ─── ADMIN ────────────────────────────────────────────────────────────────────
 export function AdminTab() {
-  const { activeTontine: tn, isAdmin } = useTontine();
+  const { activeTontine: tn, isAdmin, members, removeAdmin } = useTontine();
+  const { user } = useAuth();
   const { C, t } = useTheme();
   const [show, setShow] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [confirmRemove, setConfirmRemove] = useState(null);
+  const [error, setError] = useState('');
+
+  const isSuperAdmin = user?.uid === tn?.superAdminId;
+  const otherAdmins = (tn?.adminIds || [])
+    .filter(uid => uid !== tn?.superAdminId)
+    .map(uid => members.find(m => m.uid === uid))
+    .filter(Boolean);
+
+  const handleRemove = async (uid) => {
+    try {
+      await removeAdmin(uid);
+      setConfirmRemove(null);
+    } catch (e) {
+      setError(e.message);
+      setTimeout(() => setError(''), 3000);
+    }
+  };
 
   return (
     <div>
+      {error && <div style={{ background: '#E63946', color: '#fff', padding: '10px 16px', borderRadius: 12, marginBottom: 12, fontWeight: 700, fontSize: 13 }}>❌ {error}</div>}
+
       <div style={{ background: `${tn?.color}10`, border: `2px solid ${tn?.color}33`, borderRadius: 20, padding: 18, marginBottom: 12 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-          <Av initials="SA" color={tn?.color || '#7B2FBE'} size={54} flag />
+          <Av initials="SA" color={tn?.color || C.primary} size={54} flag />
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 7, flexWrap: 'wrap' }}>
               <p style={{ margin: 0, fontWeight: 800, fontSize: 15, color: C.text }}>{tn?.superAdminName || 'Super Administrateur'}</p>
-              <Badge text={t.superAdmin} color={tn?.color || '#7B2FBE'} />
+              <Badge text={t.superAdmin} color={tn?.color || C.primary} />
             </div>
             <p style={{ margin: '4px 0 0', fontSize: 13, color: C.subtext }}>Créateur de la tontine</p>
           </div>
         </div>
       </div>
+
+      {otherAdmins.length > 0 && (
+        <div style={{ marginBottom: 14 }}>
+          <p style={{ margin: '0 0 8px', fontSize: 12, fontWeight: 700, color: C.subtext, letterSpacing: 0.5 }}>AUTRES ADMINISTRATEURS</p>
+          {otherAdmins.map(m => (
+            <div key={m.uid} style={{ background: C.card, borderRadius: 16, padding: '12px 14px', marginBottom: 8, boxShadow: '0 4px 16px rgba(0,0,0,0.07)', display: 'flex', alignItems: 'center', gap: 12 }}>
+              <Av initials={m.av} color={m.color} size={42} flag img={m.avatar} />
+              <div style={{ flex: 1 }}>
+                <p style={{ margin: 0, fontWeight: 700, fontSize: 14, color: C.text }}>{m.name}</p>
+                <p style={{ margin: 0, fontSize: 12, color: C.subtext }}>📞 {m.phone || '—'}</p>
+              </div>
+              {isSuperAdmin && (
+                confirmRemove === m.uid ? (
+                  <div style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => handleRemove(m.uid)} style={{ padding: '6px 10px', borderRadius: 8, border: 'none', background: '#E63946', color: '#fff', fontWeight: 700, fontSize: 11, cursor: 'pointer' }}>Confirmer</button>
+                    <button onClick={() => setConfirmRemove(null)} style={{ padding: '6px 10px', borderRadius: 8, border: `1px solid ${C.border}`, background: 'none', color: C.subtext, fontSize: 11, cursor: 'pointer' }}>Annuler</button>
+                  </div>
+                ) : (
+                  <button onClick={() => setConfirmRemove(m.uid)} style={{ padding: '6px 10px', borderRadius: 8, border: 'none', background: '#FFE5E8', color: '#E63946', cursor: 'pointer', fontSize: 11, fontWeight: 700 }}>Retirer</button>
+                )
+              )}
+            </div>
+          ))}
+        </div>
+      )}
 
       {isAdmin && (
         <>
@@ -859,8 +905,8 @@ export function ProfileTab() {
     <div>
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '20px 0 24px' }}>
         <div style={{ position: 'relative', marginBottom: 16 }} onClick={() => fileRef.current.click()}>
-          <Av initials={name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'ME'} color={tn?.color || '#7B2FBE'} size={90} flag img={avatar} />
-          <div style={{ position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: '50%', background: tn?.color || '#7B2FBE', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #fff', cursor: 'pointer', fontSize: 14 }}>✏️</div>
+          <Av initials={name.split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'ME'} color={tn?.color || C.primary} size={90} flag img={avatar} />
+          <div style={{ position: 'absolute', bottom: 0, right: 0, width: 28, height: 28, borderRadius: '50%', background: tn?.color || C.primary, display: 'flex', alignItems: 'center', justifyContent: 'center', border: '3px solid #fff', cursor: 'pointer', fontSize: 14 }}>✏️</div>
         </div>
         <input ref={fileRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImg} />
         {avatarError && <p style={{ margin: '6px 0 0', fontSize: 12, color: '#E63946', fontWeight: 600 }}>⚠️ {avatarError}</p>}
@@ -871,7 +917,7 @@ export function ProfileTab() {
         <p style={{ margin: '0 0 8px', fontWeight: 700, color: tn?.color, fontSize: 13 }}>{t.displayName}</p>
         <input value={name} onChange={e => setName(e.target.value)} placeholder={t.displayName}
           style={{ width: '100%', padding: '12px', borderRadius: 12, border: `2px solid ${C.border}`, fontSize: 14, outline: 'none', background: C.inputBg, color: C.text, boxSizing: 'border-box', marginBottom: 12 }} />
-        <button onClick={save} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${tn?.color || '#7B2FBE'},${tn?.color || '#7B2FBE'}bb)`, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
+        <button onClick={save} style={{ width: '100%', padding: 12, borderRadius: 12, border: 'none', background: `linear-gradient(135deg,${tn?.color || C.primary},${tn?.color || C.primary}bb)`, color: '#fff', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
           {saved ? '✅ Enregistré !' : t.saveProfile}
         </button>
       </Card>
